@@ -14,7 +14,7 @@ import { ISecretStorageService } from '../../../../platform/secrets/common/secre
 import { IRequestService, asText } from '../../../../platform/request/common/request.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
-import { Limiter } from '../../../../base/common/async.js';
+import { Limiter, disposableTimeout } from '../../../../base/common/async.js';
 import { CancellationTokenSource } from '../../../../base/common/cancellation.js';
 import {
 	parseKeysBulk, detectProvider, defaultBaseUrl, secretFingerprint,
@@ -109,6 +109,7 @@ const STORAGE_SELECTED = 'auraApi.chat.selectedKeyId';
 const SECRET_PREFIX = 'auraApi.key.';
 const HIGH_PING_MS = 3000;
 const STORAGE_GROUPS = 'auraApi.groups';
+const STORAGE_STATUSES = 'auraApi.statuses';
 const RATE_LIMIT_BACKOFF_MS = 5_000;
 const QUEUE_PARALLEL = 5;
 
@@ -161,6 +162,16 @@ export class AuraApiKeysService extends Disposable implements IAuraApiKeysServic
 		if (this.groups.length === 0) {
 			this.groups = [{ id: 'default', name: 'По умолчанию', priority: 0 }];
 		}
+		try {
+			const rawS = this.storageService.get(STORAGE_STATUSES, StorageScope.APPLICATION, '{}');
+			const persisted = JSON.parse(rawS) as Record<string, IAuraApiKeyStatus>;
+			for (const [id, status] of Object.entries(persisted)) {
+				// checking:true в хранилище не имеет смысла — проверка новой сессии ещё не шла.
+				this.statuses.set(id, { ...status, checking: false });
+			}
+		} catch { /* статусы не критичны — начнём с пустых */ }
+		// Фоновая проверка всех ключей при старте: модели в чате оживают без ручного «обновить».
+		disposableTimeout(() => { void this.checkAllQueued(); }, 5000, this._store);
 	}
 
 	private save(): void {
@@ -236,7 +247,9 @@ export class AuraApiKeysService extends Disposable implements IAuraApiKeysServic
 
 	async removeKey(id: string): Promise<void> {
 		this.keys = this.keys.filter(k => k.id !== id);
-		this.statuses.delete(id);
+		if (this.statuses.delete(id)) {
+			this.persistStatuses();
+		}
 		await this.secretStorage.delete(this.getSecretKeyRef(id));
 		this.save();
 	}
@@ -257,8 +270,21 @@ export class AuraApiKeysService extends Disposable implements IAuraApiKeysServic
 	private setStatus(id: string, patch: Partial<IAuraApiKeyStatus>): IAuraApiKeyStatus {
 		const next = { ...this.getStatus(id), ...patch };
 		this.statuses.set(id, next);
+		this.persistStatuses();
 		this._onDidChange.fire();
 		return next;
+	}
+
+	/** Статусы переживают перезагрузку окна, чтобы модели не пропадали из чата до ручной перепроверки. */
+	private persistStatuses(): void {
+		const snapshot: Record<string, IAuraApiKeyStatus> = {};
+		for (const [id, status] of this.statuses) {
+			snapshot[id] = {
+				...status,
+				checking: false, // флаг текущей сессии, хранить его бессмысленно
+			};
+		}
+		this.storageService.store(STORAGE_STATUSES, JSON.stringify(snapshot), StorageScope.APPLICATION, StorageTarget.MACHINE);
 	}
 
 	private async timedRequest(url: string, init: { type: 'GET' | 'POST'; data?: string; headers?: Record<string, string>; timeout?: number }): Promise<{ ms: number; status?: number; body: string }> {

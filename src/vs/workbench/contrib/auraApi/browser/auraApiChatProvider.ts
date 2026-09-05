@@ -5,6 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Emitter, Event } from '../../../../base/common/event.js';
+import { encodeBase64 } from '../../../../base/common/buffer.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { canceled } from '../../../../base/common/errors.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
@@ -43,10 +44,15 @@ interface IOpenAIToolCall {
 
 interface IOpenAIMessage {
 	role: 'system' | 'user' | 'assistant' | 'tool';
-	content: string;
+	content: string | IOpenAIContentPart[];
 	tool_calls?: IOpenAIToolCall[];
 	tool_call_id?: string;
 }
+
+/** Мультимодальный контент: текст + изображения (data URL), как в OpenAI Chat API. */
+type IOpenAIContentPart =
+	| { type: 'text'; text: string }
+	| { type: 'image_url'; image_url: { url: string } };
 
 /** Инструмент в формате, который приходит от ядра чата (`vscode.LanguageModelChatTool`). */
 interface IChatRequestTool {
@@ -78,6 +84,11 @@ function isBlockedByContentSecurityPolicy(baseUrl: string): boolean {
 		return false;
 	}
 	return !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(baseUrl);
+}
+
+/** Грубая эвристика мультимодальности по имени модели: текстовые Chat API различают её сами. */
+function supportsImages(model: string): boolean {
+	return /gpt-4o|gpt-4\.1|gpt-5|o3|o4|claude-3|claude-opus|claude-sonnet|claude-haiku|gemini|llama-3\.2-vision|pixtral|qwen.*vl|glm-4v/i.test(model);
 }
 
 export class AuraApiChatProvider extends Disposable implements ILanguageModelChatProvider {
@@ -128,7 +139,7 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 				tooltip: status.excludedHighPing
 					? `Aura API: ${key.model} @ ${key.baseUrl} — высокий пинг (${status.pingMs} мс)`
 					: `Aura API: ${key.model} @ ${key.baseUrl}`,
-				capabilities: { toolCalling: true, agentMode: true },
+				capabilities: { vision: supportsImages(key.model), toolCalling: true, agentMode: true },
 			};
 			return { identifier: toAuraModelIdentifier(key.id), metadata };
 		});
@@ -164,6 +175,7 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 				: message.role === ChatMessageRole.User ? 'user' : 'assistant';
 
 			const textChunks: string[] = [];
+			const contentParts: IOpenAIContentPart[] = [];
 			const toolCalls: IOpenAIToolCall[] = [];
 
 			for (const part of message.content) {
@@ -171,6 +183,12 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 					if (part.value) {
 						textChunks.push(part.value);
 					}
+				} else if (part.type === 'image_url') {
+					// Изображения приходят как сырые байты — упаковываем в data URL для OpenAI-совместимого API.
+					contentParts.push({
+						type: 'image_url',
+						image_url: { url: `data:${part.value.mimeType};base64,${encodeBase64(part.value.data)}` },
+					});
 				} else if (part.type === 'tool_use') {
 					toolCalls.push({
 						id: part.toolCallId,
@@ -183,12 +201,16 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 				}
 			}
 
-			if (textChunks.length === 0 && toolCalls.length === 0) {
+			if (textChunks.length === 0 && contentParts.length === 0 && toolCalls.length === 0) {
 				continue;
 			}
+			// Чисто текстовые сообщения остаются строкой — не все совместимые API принимают массив.
+			const content: string | IOpenAIContentPart[] = contentParts.length > 0
+				? [...textChunks.map(text => ({ type: 'text' as const, text })), ...contentParts]
+				: textChunks.join('\n');
 			result.push({
 				role,
-				content: textChunks.join('\n'),
+				content,
 				...(toolCalls.length ? { tool_calls: toolCalls } : {}),
 			});
 		}
