@@ -137,7 +137,9 @@ function registerAuraApiPlugin(instantiationService: IInstantiationService): voi
 			vendor: AURA_API_VENDOR,
 			displayName: AURA_API_VENDOR_DISPLAY_NAME,
 			configuration: undefined,
-			managementCommand: undefined,
+			// Без managementCommand у вендора нет иконки-шестерёнки в «Manage Models»
+			// (chatModelsWidget показывает её только для vendors с managementCommand/configuration).
+			managementCommand: AURA_API_OPEN_COMMAND_ID,
 			when: undefined,
 		}], []);
 		languageModels.registerLanguageModelProvider(
