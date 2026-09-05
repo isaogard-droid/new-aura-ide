@@ -31,12 +31,13 @@ import { IThemeService } from '../../../../platform/theme/common/themeService.js
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { IViewsService } from '../../../services/views/common/viewsService.js';
 import { IStorageService, StorageScope } from '../../../../platform/storage/common/storage.js';
+import { ILogService } from '../../../../platform/log/common/log.js';
 import { Extensions as ConfigurationExtensions, IConfigurationRegistry } from '../../../../platform/configuration/common/configurationRegistry.js';
 import { registerWorkbenchContribution2, WorkbenchPhase } from '../../../common/contributions.js';
 import { ILanguageModelsService } from '../../chat/common/languageModels.js';
 import { AuraApiEditorPane } from './auraApiEditorPane.js';
 import { AuraApiEditorInput, AuraApiEditorInputSerializer } from './auraApiEditorInput.js';
-import { AuraApiChatProvider, AURA_API_VENDOR, AURA_API_SYSTEM_PROMPT_SETTING } from './auraApiChatProvider.js';
+import { AuraApiChatProvider, AURA_API_VENDOR, AURA_API_VENDOR_DISPLAY_NAME, AURA_API_SYSTEM_PROMPT_SETTING } from './auraApiChatProvider.js';
 import { IAuraApiKeysService } from '../common/auraApiKeys.js';
 import { auraMarketInstalledKey } from '../../auraMarket/common/auraMarketCatalog.js';
 
@@ -124,15 +125,27 @@ function registerAuraApiPlugin(instantiationService: IInstantiationService): voi
 		}
 	});
 
-	// Провайдер моделей чата: здоровые ключи Aura API доступны в чате справа
+	// Провайдер моделей чата: ключи Aura API доступны в чате справа.
+	// Порядок важен: сначала дескриптор вендора (иначе registerLanguageModelProvider бросает
+	// «UNKNOWN vendor»), затем провайдер, и только потом первое разрешение моделей.
 	instantiationService.invokeFunction(accessor => {
 		const languageModels = accessor.get(ILanguageModelsService);
 		const keysService = accessor.get(IAuraApiKeysService);
 		const configurationService = accessor.get(IConfigurationService);
+		const logService = accessor.get(ILogService);
+		languageModels.deltaLanguageModelChatProviderDescriptors([{
+			vendor: AURA_API_VENDOR,
+			displayName: AURA_API_VENDOR_DISPLAY_NAME,
+			configuration: undefined,
+			managementCommand: undefined,
+			when: undefined,
+		}], []);
 		languageModels.registerLanguageModelProvider(
 			AURA_API_VENDOR,
-			new AuraApiChatProvider(keysService, configurationService)
+			new AuraApiChatProvider(keysService, configurationService, logService)
 		);
+		// Первое разрешение: без него модели появятся только после следующего onDidChange.
+		void languageModels.selectLanguageModels({ vendor: AURA_API_VENDOR });
 	});
 }
 

@@ -1,48 +1,116 @@
 /*---------------------------------------------------------------------------------------------
  *  Aura API — провайдер языковых моделей для встроенного чата.
- *  Каждый здоровый ключ (ok, без высокого пинга) появляется в списке моделей
+ *  Каждый пригодный ключ (не отклонённый проверкой) появляется в списке моделей
  *  чата как BYOK-модель; запросы уходят на его OpenAI-совместимый эндпоинт.
  *--------------------------------------------------------------------------------------------*/
 
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
+import { Disposable } from '../../../../base/common/lifecycle.js';
 import { ExtensionIdentifier } from '../../../../platform/extensions/common/extensions.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { ILogService } from '../../../../platform/log/common/log.js';
 import {
 	ILanguageModelChatProvider, ILanguageModelChatMetadataAndIdentifier, ILanguageModelChatResponse,
 	ILanguageModelChatRequestOptions, ILanguageModelChatInfoOptions, ILanguageModelChatMetadata,
+	IChatResponsePart, ChatMessageRole,
 } from '../../chat/common/languageModels.js';
 import { IChatMessage } from '../../chat/common/languageModels.js';
 import { IAuraApiKeysService, IAuraApiKey } from '../common/auraApiKeys.js';
 
 export const AURA_API_VENDOR = 'auraApi';
+export const AURA_API_VENDOR_DISPLAY_NAME = 'Aura API';
 export const AURA_API_SYSTEM_PROMPT_SETTING = 'auraApi.chat.systemPrompt';
 
-interface IOpenAIMessage { role: string; content: string }
+/** Идентификатор модели в сервисе моделей: `auraApi/<id ключа>`. */
+export function toAuraModelIdentifier(keyId: string): string {
+	return `${AURA_API_VENDOR}/${keyId}`;
+}
 
-export class AuraApiChatProvider implements ILanguageModelChatProvider {
+/** Обратное преобразование: сервис зовёт `sendChatRequest` с полным идентификатором, а не с id ключа. */
+function toKeyId(modelIdentifier: string): string {
+	return modelIdentifier.startsWith(`${AURA_API_VENDOR}/`)
+		? modelIdentifier.slice(AURA_API_VENDOR.length + 1)
+		: modelIdentifier;
+}
 
-	private readonly _onDidChange = new Emitter<void>();
+interface IOpenAIToolCall {
+	id: string;
+	type: 'function';
+	function: { name: string; arguments: string };
+}
+
+interface IOpenAIMessage {
+	role: 'system' | 'user' | 'assistant' | 'tool';
+	content: string;
+	tool_calls?: IOpenAIToolCall[];
+	tool_call_id?: string;
+}
+
+/** Инструмент в формате, который приходит от ядра чата (`vscode.LanguageModelChatTool`). */
+interface IChatRequestTool {
+	readonly name: string;
+	readonly description?: string;
+	readonly inputSchema?: object;
+}
+
+/** Накопитель дельт tool_calls: OpenAI шлёт имя и аргументы по кускам, склеивая их по index. */
+interface IToolCallAccumulator {
+	id: string;
+	name: string;
+	arguments: string;
+}
+
+function partsToText(parts: readonly unknown[]): string {
+	return parts
+		.map(part => {
+			const p = part as { type?: string; value?: unknown };
+			return p.type === 'text' ? String(p.value ?? '') : '';
+		})
+		.filter(Boolean)
+		.join('\n');
+}
+
+/** CSP воркбенча пропускает только https и локальный http — иначе запрос молча блокируется. */
+function isBlockedByContentSecurityPolicy(baseUrl: string): boolean {
+	if (!/^http:\/\//i.test(baseUrl)) {
+		return false;
+	}
+	return !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(baseUrl);
+}
+
+export class AuraApiChatProvider extends Disposable implements ILanguageModelChatProvider {
+
+	private readonly _onDidChange = this._register(new Emitter<void>());
 	readonly onDidChange: Event<void> = this._onDidChange.event;
 
 	constructor(
 		private readonly keysService: IAuraApiKeysService,
 		private readonly configurationService: IConfigurationService,
+		private readonly logService: ILogService,
 	) {
-		this.keysService.onDidChange(() => this._onDidChange.fire());
+		super();
+		this._register(this.keysService.onDidChange(() => this._onDidChange.fire()));
 	}
 
-	/** Здоровые ключи как модели чата. */
+	/**
+	 * Ключи, пригодные для чата. Ключ показывается, пока проверка явно не забраковала его:
+	 * непроверенный ключ тоже должен быть виден в списке моделей, иначе после добавления
+	 * ключа в чате не появляется ничего.
+	 */
 	private usableKeys(): IAuraApiKey[] {
-		return this.keysService.getKeys().filter(k => {
-			const s = this.keysService.getStatus(k.id);
-			return s.ok === true && !s.excludedHighPing;
+		return this.keysService.getKeys().filter(key => {
+			const status = this.keysService.getStatus(key.id);
+			if (status.ok === false) {
+				return false;
+			}
+			return status.health !== 'unauthorized' && status.health !== 'forbidden';
 		});
 	}
 
 	async provideLanguageModelChatInfo(_options: ILanguageModelChatInfoOptions, _token: CancellationToken): Promise<ILanguageModelChatMetadataAndIdentifier[]> {
 		return this.usableKeys().map(key => {
-			const identifier = `${AURA_API_VENDOR}/${key.id}`;
+			const status = this.keysService.getStatus(key.id);
 			const metadata: ILanguageModelChatMetadata = {
 				extension: new ExtensionIdentifier('aura.aura-api'),
 				name: `${key.name} (${key.model})`,
@@ -55,111 +123,293 @@ export class AuraApiChatProvider implements ILanguageModelChatProvider {
 				isDefaultForLocation: {},
 				isUserSelectable: true,
 				isBYOK: true,
-				tooltip: `Aura API: ${key.model} @ ${key.baseUrl}`,
+				detail: key.group,
+				tooltip: status.excludedHighPing
+					? `Aura API: ${key.model} @ ${key.baseUrl} — высокий пинг (${status.pingMs} мс)`
+					: `Aura API: ${key.model} @ ${key.baseUrl}`,
 				capabilities: { toolCalling: true, agentMode: true },
 			};
-			return { identifier, metadata };
+			return { identifier: toAuraModelIdentifier(key.id), metadata };
 		});
 	}
 
-	async sendChatRequest(modelId: string, messages: IChatMessage[], _from: ExtensionIdentifier | undefined, options: ILanguageModelChatRequestOptions, token: CancellationToken): Promise<ILanguageModelChatResponse> {
-		// Выбор ключа через роутер (группы → веса → cooldown), fallback — старый список
-		const routed = this.keysService.resolveKeyForModel ? this.keysService.resolveKeyForModel() : undefined;
-		const preferred = this.keysService.getKeys().find(k => k.id === modelId) ?? routed;
-		if (!preferred) { throw new Error(`Aura API: нет живых ключей (modelId=${modelId})`); }
-		const candidates: IAuraApiKey[] = [preferred, ...this.usableKeys().filter(k => k.id !== preferred.id)];
+	/**
+	 * Порядок перебора ключей: выбранная пользователем модель первой, затем остальные
+	 * пригодные ключи как резерв (фейловер возможен только до первого байта ответа).
+	 */
+	private candidatesFor(modelIdentifier: string): IAuraApiKey[] {
+		const keyId = toKeyId(modelIdentifier);
+		const usable = this.usableKeys();
+		const preferred = usable.find(k => k.id === keyId)
+			?? this.keysService.getKeys().find(k => k.id === keyId)
+			?? this.keysService.resolveKeyForModel?.()
+			?? usable[0];
+		if (!preferred) {
+			return [];
+		}
+		return [preferred, ...usable.filter(k => k.id !== preferred.id)];
+	}
 
+	private buildMessages(messages: IChatMessage[]): IOpenAIMessage[] {
 		const systemPrompt = (this.configurationService.getValue<string>(AURA_API_SYSTEM_PROMPT_SETTING) ?? '').trim();
-		const oaiMessages: IOpenAIMessage[] = [];
+		const result: IOpenAIMessage[] = [];
 		if (systemPrompt) {
-			oaiMessages.push({ role: 'system', content: systemPrompt });
-		}
-		for (const m of messages) {
-			const text = m.content
-				.map(part => (part as { type?: string; value?: unknown }).type === 'text' ? String((part as { value: unknown }).value) : '')
-				.filter(Boolean)
-				.join('\n');
-			if (!text) { continue; }
-			oaiMessages.push({ role: m.role === 1 /* User */ ? 'user' : 'assistant', content: text });
+			result.push({ role: 'system', content: systemPrompt });
 		}
 
+		for (const message of messages) {
+			const role = message.role === ChatMessageRole.System
+				? 'system'
+				: message.role === ChatMessageRole.User ? 'user' : 'assistant';
 
-		const controller = new AbortController();
-		token.onCancellationRequested(() => controller.abort());
+			const textChunks: string[] = [];
+			const toolCalls: IOpenAIToolCall[] = [];
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const self = this;
-		let resolveResult!: (v: string) => void;
-		let rejectResult!: (e: unknown) => void;
-		const result = new Promise<string>((res, rej) => { resolveResult = res; rejectResult = rej; });
-
-		const stream = (async function* () {
-			let lastError: unknown;
-			let yielded = false; // стрим начался — фейловер на другой ключ уже невозможен (иначе дубли текста)
-			for (const key of candidates) {
-				if (controller.signal.aborted) { break; }
-				try {
-					const secret = await self.keysService.getSecret(key.id);
-					const base = key.baseUrl.replace(/\/+$/, '');
-					const response = await fetch(`${base}/chat/completions`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							...(secret ? { 'Authorization': `Bearer ${secret}` } : {}),
-						},
-						body: JSON.stringify({ model: key.model, messages: oaiMessages, stream: true }),
-						signal: controller.signal,
+			for (const part of message.content) {
+				if (part.type === 'text') {
+					if (part.value) {
+						textChunks.push(part.value);
+					}
+				} else if (part.type === 'tool_use') {
+					toolCalls.push({
+						id: part.toolCallId,
+						type: 'function',
+						function: { name: part.name, arguments: JSON.stringify(part.parameters ?? {}) },
 					});
-					if (!response.ok || !response.body) {
-						const body = await response.text().catch(() => '');
-						throw new Error(`Aura API [${key.name}]: HTTP ${response.status} — ${body.slice(0, 200)}`);
-					}
-					// SSE: читаем дельты и репортим их по мере поступления
-					const reader = response.body.getReader();
-					const decoder = new TextDecoder();
-					let buffer = '';
-					let fullText = '';
-					for (;;) {
-						const { done, value } = await reader.read();
-						if (done) { break; }
-						buffer += decoder.decode(value, { stream: true });
-						const lines = buffer.split('\n');
-						buffer = lines.pop() ?? '';
-						for (const line of lines) {
-							const trimmedLine = line.trim();
-							if (!trimmedLine.startsWith('data:')) { continue; }
-							const payload = trimmedLine.slice(5).trim();
-							if (payload === '[DONE]') { continue; }
-							try {
-								const json = JSON.parse(payload);
-								const delta = json?.choices?.[0]?.delta?.content;
-								if (typeof delta === 'string' && delta.length > 0) {
-									fullText += delta;
-									yielded = true;
-									yield { type: 'text' as const, value: delta };
-								}
-							} catch { /* неполный JSON-чанк — пропускаем */ }
-						}
-					}
-					resolveResult(fullText);
-					return;
-				} catch (e) {
-					if (yielded) { rejectResult(e); throw e; }
-					lastError = e; // ошибка до первого байта — пробуем следующий ключ
+				} else if (part.type === 'tool_result') {
+					// Результат инструмента — отдельное сообщение роли `tool`, привязанное к вызову.
+					result.push({ role: 'tool', tool_call_id: part.toolCallId, content: partsToText(part.value) });
 				}
 			}
-			const err = lastError instanceof Error ? lastError : new Error('Aura API: все ключи недоступны');
-			rejectResult(err);
-			throw err;
-		})();
 
+			if (textChunks.length === 0 && toolCalls.length === 0) {
+				continue;
+			}
+			result.push({
+				role,
+				content: textChunks.join('\n'),
+				...(toolCalls.length ? { tool_calls: toolCalls } : {}),
+			});
+		}
+
+		return result;
+	}
+
+	private static toOpenAITools(options: ILanguageModelChatRequestOptions): unknown[] | undefined {
+		const tools = (options as { tools?: readonly IChatRequestTool[] }).tools;
+		if (!tools?.length) {
+			return undefined;
+		}
+		return tools.map(tool => ({
+			type: 'function',
+			function: {
+				name: tool.name,
+				description: tool.description ?? '',
+				parameters: tool.inputSchema ?? { type: 'object', properties: {} },
+			},
+		}));
+	}
+
+	async sendChatRequest(modelId: string, messages: IChatMessage[], _from: ExtensionIdentifier | undefined, options: ILanguageModelChatRequestOptions, token: CancellationToken): Promise<ILanguageModelChatResponse> {
+		const candidates = this.candidatesFor(modelId);
+		if (candidates.length === 0) {
+			throw new Error('Aura API: нет доступных ключей. Добавьте ключ во вкладке «Aura API».');
+		}
+
+		const oaiMessages = this.buildMessages(messages);
+		const tools = AuraApiChatProvider.toOpenAITools(options);
+
+		const controller = new AbortController();
+		const cancellationListener = token.onCancellationRequested(() => controller.abort());
+
+		let resolveResult!: (value: string) => void;
+		let rejectResult!: (error: unknown) => void;
+		const result = new Promise<string>((res, rej) => { resolveResult = res; rejectResult = rej; });
+		// Потребители, читающие только поток, никогда не ждут `result`; без этого его отклонение
+		// всплывает как unhandled rejection.
+		result.catch(() => { });
+
+		const stream = this.createStream(candidates, oaiMessages, tools, controller, resolveResult, rejectResult, cancellationListener);
 		return { stream, result };
+	}
+
+	private async *createStream(
+		candidates: IAuraApiKey[],
+		oaiMessages: IOpenAIMessage[],
+		tools: unknown[] | undefined,
+		controller: AbortController,
+		resolveResult: (value: string) => void,
+		rejectResult: (error: unknown) => void,
+		cancellationListener: { dispose(): void },
+	): AsyncIterable<IChatResponsePart> {
+		let lastError: unknown;
+		// После первого выданного куска фейловер невозможен — иначе текст задвоится.
+		let yielded = false;
+		try {
+			for (const key of candidates) {
+				if (controller.signal.aborted) {
+					break;
+				}
+				try {
+					yield* this.streamFromKey(key, oaiMessages, tools, controller, () => { yielded = true; }, resolveResult);
+					return;
+				} catch (error) {
+					if (yielded) {
+						rejectResult(error);
+						throw error;
+					}
+					this.logService.warn(`[AuraAPI] ключ «${key.name}» недоступен, пробуем следующий`, error);
+					lastError = error;
+				}
+			}
+			const error = lastError instanceof Error ? lastError : new Error('Aura API: все ключи недоступны');
+			rejectResult(error);
+			throw error;
+		} finally {
+			cancellationListener.dispose();
+		}
+	}
+
+	private async *streamFromKey(
+		key: IAuraApiKey,
+		oaiMessages: IOpenAIMessage[],
+		tools: unknown[] | undefined,
+		controller: AbortController,
+		onYield: () => void,
+		resolveResult: (value: string) => void,
+	): AsyncIterable<IChatResponsePart> {
+		const base = key.baseUrl.replace(/\/+$/, '');
+		if (isBlockedByContentSecurityPolicy(base)) {
+			throw new Error(`Aura API [${key.name}]: адрес ${base} использует http:// — политика безопасности окна разрешает только https:// (или localhost). Укажите https-адрес.`);
+		}
+
+		const secret = await this.keysService.getSecret(key.id);
+		const response = await fetch(`${base}/chat/completions`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				...(secret ? { 'Authorization': `Bearer ${secret}` } : {}),
+			},
+			body: JSON.stringify({
+				model: key.model,
+				messages: oaiMessages,
+				stream: true,
+				...(tools ? { tools, tool_choice: 'auto' } : {}),
+			}),
+			signal: controller.signal,
+		});
+
+		if (!response.ok) {
+			const body = await response.text().catch(() => '');
+			throw new Error(`Aura API [${key.name}]: HTTP ${response.status} — ${body.slice(0, 200)}`);
+		}
+		if (!response.body) {
+			// Эндпоинт проигнорировал stream:true и вернул цельный JSON.
+			const body = await response.text();
+			const text = this.textFromNonStreamedBody(body);
+			if (text) {
+				onYield();
+				yield { type: 'text', value: text };
+			}
+			resolveResult(text);
+			return;
+		}
+
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		const toolCalls = new Map<number, IToolCallAccumulator>();
+		let buffer = '';
+		let fullText = '';
+
+		for (; ;) {
+			const { done, value } = await reader.read();
+			if (done) {
+				break;
+			}
+			buffer += decoder.decode(value, { stream: true });
+			const lines = buffer.split('\n');
+			buffer = lines.pop() ?? '';
+			for (const line of lines) {
+				const trimmed = line.trim();
+				if (!trimmed.startsWith('data:')) {
+					continue;
+				}
+				const payload = trimmed.slice(5).trim();
+				if (!payload || payload === '[DONE]') {
+					continue;
+				}
+				let json: {
+					choices?: Array<{
+						delta?: {
+							content?: unknown;
+							reasoning_content?: unknown;
+							tool_calls?: Array<{ index?: number; id?: string; function?: { name?: string; arguments?: string } }>;
+						};
+					}>;
+					error?: { message?: string };
+				};
+				try {
+					json = JSON.parse(payload);
+				} catch {
+					continue; // неполный JSON-чанк
+				}
+				if (json.error?.message) {
+					throw new Error(`Aura API [${key.name}]: ${json.error.message}`);
+				}
+				const delta = json.choices?.[0]?.delta;
+				if (!delta) {
+					continue;
+				}
+				if (typeof delta.reasoning_content === 'string' && delta.reasoning_content) {
+					onYield();
+					yield { type: 'thinking', value: delta.reasoning_content };
+				}
+				if (typeof delta.content === 'string' && delta.content) {
+					fullText += delta.content;
+					onYield();
+					yield { type: 'text', value: delta.content };
+				}
+				for (const call of delta.tool_calls ?? []) {
+					const index = call.index ?? 0;
+					const acc = toolCalls.get(index) ?? { id: '', name: '', arguments: '' };
+					if (call.id) { acc.id = call.id; }
+					if (call.function?.name) { acc.name = call.function.name; }
+					if (call.function?.arguments) { acc.arguments += call.function.arguments; }
+					toolCalls.set(index, acc);
+				}
+			}
+		}
+
+		for (const call of toolCalls.values()) {
+			if (!call.name) {
+				continue;
+			}
+			let parameters: unknown = {};
+			try {
+				parameters = call.arguments ? JSON.parse(call.arguments) : {};
+			} catch {
+				this.logService.warn(`[AuraAPI] инструмент ${call.name}: аргументы не разобрались как JSON`);
+			}
+			onYield();
+			yield { type: 'tool_use', name: call.name, toolCallId: call.id || `${call.name}-${toolCalls.size}`, parameters };
+		}
+
+		resolveResult(fullText);
+	}
+
+	private textFromNonStreamedBody(body: string): string {
+		try {
+			const parsed = JSON.parse(body);
+			return String(parsed?.choices?.[0]?.message?.content ?? '');
+		} catch {
+			return body;
+		}
 	}
 
 	async provideTokenCount(_modelId: string, message: string | IChatMessage, _token: CancellationToken): Promise<number> {
 		const text = typeof message === 'string'
 			? message
-			: message.content.map(p => String((p as { value?: unknown }).value ?? '')).join(' ');
+			: partsToText(message.content);
 		return Math.ceil(text.length / 4); // приблизительная оценка токенов
 	}
 }
