@@ -6,6 +6,7 @@
 
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
+import { canceled } from '../../../../base/common/errors.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { ExtensionIdentifier } from '../../../../platform/extensions/common/extensions.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
@@ -220,7 +221,6 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 		const tools = AuraApiChatProvider.toOpenAITools(options);
 
 		const controller = new AbortController();
-		const cancellationListener = token.onCancellationRequested(() => controller.abort());
 
 		let resolveResult!: (value: string) => void;
 		let rejectResult!: (error: unknown) => void;
@@ -229,7 +229,7 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 		// всплывает как unhandled rejection.
 		result.catch(() => { });
 
-		const stream = this.createStream(candidates, oaiMessages, tools, controller, resolveResult, rejectResult, cancellationListener);
+		const stream = this.createStream(candidates, oaiMessages, tools, controller, token, resolveResult, rejectResult);
 		return { stream, result };
 	}
 
@@ -238,22 +238,36 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 		oaiMessages: IOpenAIMessage[],
 		tools: unknown[] | undefined,
 		controller: AbortController,
+		token: CancellationToken,
 		resolveResult: (value: string) => void,
 		rejectResult: (error: unknown) => void,
-		cancellationListener: { dispose(): void },
 	): AsyncIterable<IChatResponsePart> {
 		let lastError: unknown;
 		// После первого выданного куска фейловер невозможен — иначе текст задвоится.
 		let yielded = false;
+		// Отмену отслеживаем опросом на границах чанков, а не подпиской на токен:
+		// подписка создаёт IDisposable, который некому освободить, если потребитель
+		// не дочитает поток до конца — трекер утечек помечает его как LEAKED DISPOSABLE.
+		const checkCancelled = () => {
+			if (token.isCancellationRequested) {
+				controller.abort();
+			}
+		};
 		try {
 			for (const key of candidates) {
+				checkCancelled();
 				if (controller.signal.aborted) {
-					break;
+					throw canceled();
 				}
 				try {
-					yield* this.streamFromKey(key, oaiMessages, tools, controller, () => { yielded = true; }, resolveResult);
+					yield* this.streamFromKey(key, oaiMessages, tools, controller, checkCancelled, () => { yielded = true; }, resolveResult);
 					return;
 				} catch (error) {
+					if (controller.signal.aborted) {
+						const cancellation = canceled();
+						rejectResult(cancellation);
+						throw cancellation;
+					}
 					if (yielded) {
 						rejectResult(error);
 						throw error;
@@ -266,7 +280,7 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 			rejectResult(error);
 			throw error;
 		} finally {
-			cancellationListener.dispose();
+			controller.abort(); // закрывает соединение, если потребитель бросил поток на середине
 		}
 	}
 
@@ -275,6 +289,7 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 		oaiMessages: IOpenAIMessage[],
 		tools: unknown[] | undefined,
 		controller: AbortController,
+		checkCancelled: () => void,
 		onYield: () => void,
 		resolveResult: (value: string) => void,
 	): AsyncIterable<IChatResponsePart> {
@@ -322,6 +337,7 @@ export class AuraApiChatProvider extends Disposable implements ILanguageModelCha
 		let fullText = '';
 
 		for (; ;) {
+			checkCancelled();
 			const { done, value } = await reader.read();
 			if (done) {
 				break;
