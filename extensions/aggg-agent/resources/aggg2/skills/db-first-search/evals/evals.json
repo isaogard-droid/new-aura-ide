@@ -1,0 +1,15 @@
+{
+  "skill_name": "db-first-search",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Хочу отрефакторить charge_seconds, но сначала понять, кто её вызывает. Что делать?",
+      "expected_output": "DB-FIRST: свежесть базы (search.py --refresh -r корень), затем search.py --calls charge_seconds / --symbol — кто вызывает напрямую. Если нужны ВСЕ ссылки (тернарные вызовы) — agent-lsp find_references. Не начинать с грепа/чтения файлов."
+    },
+    {
+      "id": 2,
+      "prompt": "«Мы раньше обсуждали rate limit — к чему пришли?» Ответь по фактам, не по памяти.",
+      "expected_output": "findings.py search \"rate limit\" в research.db → найти находки → ответить фактами из базы со ссылкой на id/источник. Память сессии не источник. Если пусто — честно «не нашёл в базе», а не выдумывать."
+    }
+  ]
+}

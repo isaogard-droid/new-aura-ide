@@ -1,0 +1,15 @@
+{
+  "skill_name": "workspace-map",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Хочу добавить новый скилл в канон AGGG2.0. Как правильно?",
+      "expected_output": "Положить в skills/<name>/SKILL.md (name = имя папки, формат agentskills.io); разнести: python3 scripts/install/install_agents.py --skills (по харнесам + ~/.agents/skills/); проверить md5 копий; при удалении скилла — чистить харнесы вручную (install_agents.py не удаляет); после правки AGENTS.md — 3 зеркала + --all + run_tests --mirrors."
+    },
+    {
+      "id": 2,
+      "prompt": "Обновили AGENTS.md в корне. Что обязательно сделать дальше?",
+      "expected_output": "1) синхронизировать 3 зеркала (корень, projects/sherpa-voice/AGENTS.md, ~/.config/opencode/AGENTS.md) в одном заходе; 2) python3 scripts/install/install_agents.py --all (AGENTS.md + скиллы канона + агентские скиллы, бэкап .bak); 3) ./projects/sherpa-voice/run_tests.sh --mirrors — проверка идентичности."
+    }
+  ]
+}

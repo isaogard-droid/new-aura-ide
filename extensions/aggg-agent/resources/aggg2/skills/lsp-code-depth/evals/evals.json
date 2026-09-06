@@ -1,0 +1,15 @@
+{
+  "skill_name": "lsp-code-depth",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Переименуй функцию process_audio в process_voice во всём проекте, безопасно.",
+      "expected_output": "agent-lsp: start_lsp (root_dir, language_id) → prepare_rename (позиция file+line+column 1-indexed) → предпросмотр → rename_symbol (не трогает комментарии/чужие переменные) → get_diagnostics (0 ошибок). База --symbol сначала (дёшево), LSP для полноты ссылок."
+    },
+    {
+      "id": 2,
+      "prompt": "Только что поправил install_proshivka.py. Что обязательно проверить?",
+      "expected_output": "get_diagnostics через agent-lsp (0 ошибок ДО ruff/semgrep/тестов — пропущенная диагностика = незавершённая правка), затем ruff+semgrep+тесты, перед коммитом — ревью диффа через code-review-graph."
+    }
+  ]
+}

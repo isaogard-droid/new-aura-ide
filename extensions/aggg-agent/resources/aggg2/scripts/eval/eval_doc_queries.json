@@ -1,0 +1,43 @@
+[
+  {"doc": "FABLE-JUDGE.md", "skills": ["fable-judge"], "should": true,
+   "query": "Я закончил рефакторинг модуля. Проверь, что работа действительно сделана и работает — суди строго, по доказательствам."},
+  {"doc": "FABLE-JUDGE.md", "skills": ["fable-judge"], "should": false,
+   "query": "Напиши юнит-тест для шахматного судьи (валидация ходов конём)."},
+
+  {"doc": "ORCHESTRATION.md", "skills": [], "should": true,
+   "query": "Эту большую задачу нужно разбить на части и раздать нескольким агентам параллельно. Как правильно организовать?"},
+  {"doc": "ORCHESTRATION.md", "skills": [], "should": false,
+   "query": "Объясни, что такое оркестратор в Kubernetes и зачем он нужен."},
+
+  {"doc": "ASK-NODUMB.md", "skills": ["ask-nodumb"], "should": true,
+   "query": "Придумай фичу для моего приложения: с какого экрана начать и что там должно быть?"},
+  {"doc": "ASK-NODUMB.md", "skills": ["ask-nodumb"], "should": false,
+   "query": "Придумай имя для котёнка."},
+
+  {"doc": "CHANGELOG-DISCIPLINE.md", "skills": ["changelog-discipline"], "should": true,
+   "query": "Запиши в CHANGELOG, что мы сегодня решили и почему отвергли альтернативу."},
+  {"doc": "CHANGELOG-DISCIPLINE.md", "skills": ["changelog-discipline"], "should": false,
+   "query": "Добавь запись в todo-файл на завтра: купить хлеб."},
+
+  {"doc": "NODUMB.md", "skills": ["nodumb"], "should": true,
+   "query": "Стоит ли вынести модуль в отдельный пакет? Посоветуй, как лучше подойти к этому рефакторингу."},
+  {"doc": "NODUMB.md", "skills": ["nodumb"], "should": false,
+   "query": "Сделай бэкап папки с фотографиями в архив."},
+
+  {"doc": "MULTIMODEL-JUDGE.md", "skills": ["multimodel-judge"], "should": true,
+   "query": "Проверь этот большой дифф вторым мнением — ответ уйдёт наружу, ошибка дорогая."},
+  {"doc": "FABLE-DOMAIN.md", "skills": ["fable-domain"], "should": true,
+   "query": "Сделай доменный скилл для финансовой отчётности: workflow, flowchart, адаптер и eval."},
+  {"doc": "FABLE-LOOP.md", "skills": ["fable-loop"], "should": true,
+   "query": "Задача нетривиальная и многошаговая — запусти оркестрированный цикл с параллельными субагентами."},
+  {"doc": "FABLE-METHOD.md", "skills": ["fable-method"], "should": true,
+   "query": "Подойди к задаче как Фейбл: классифицируй запрос, определи критерий готовности, собери доказательства."},
+  {"doc": "AGENTS.md", "skills": ["aggg2-mandatory-reads"], "should": true,
+   "query": "Начинаю работу в AGGG2.0: поправь файл скилла — сначала прочитай обязательный контекст по правилам воркспейса."},
+  {"doc": "CYCLE.md", "skills": ["aggg2-mandatory-reads"], "should": true,
+   "query": "Есть задача в воркспейсе AGGG2.0 — выполни её по рабочему циклу, как положено."},
+  {"doc": "DB-FIRST.md", "skills": ["aggg2-mandatory-reads"], "should": true,
+   "query": "Задача в стороннем проекте /tmp/myproject (НЕ воркспейс AGGG2.0): добавь функцию парсинга CSV."},
+  {"doc": "AGENTS.md", "skills": ["aggg2-mandatory-reads"], "should": false,
+   "query": "Расскажи, что такое Python — общий вопрос, не про воркспейс."}
+]

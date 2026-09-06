@@ -1,0 +1,11 @@
+{
+  "_comment": "Grandfather-список (паттерн SonarQube new-code quality gate): файлы, уже выше hard-лимита на момент ввода правила. Значение lines — как меряет scripts/tools/audit/check_file_sizes.py (wc -l). РОСТ выше lines = error в CI; можно только уменьшать (резка). После резки файла ниже hard — удалить запись: начнёт действовать hard-лимит.",
+  "docs/CHANGELOG-ARCHIVE.md": {
+    "lines": 517,
+    "why": "исторический архив CHANGELOG (резка 15.08)"
+  },
+  "projects/sherpa-voice/CHANGELOG-ARCHIVE.md": {
+    "lines": 1254,
+    "why": "исторический архив sherpa-voice CHANGELOG"
+  }
+}

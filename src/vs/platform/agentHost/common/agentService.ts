@@ -117,6 +117,9 @@ export const AgentHostActiveAgentTitleGenerationSettingId = 'chat.agentHost.expe
 /** Configuration key enabling rich-link guidance for Markdown plan documents. */
 export const AgentHostMarkdownPlanRichLinksEnabledSettingId = 'chat.agentHost.experimental.markdownPlanRichLinks';
 
+/** Configuration key enabling AGGG instructions for every chat provider. */
+export const AgentHostAgggAgentEnabledSettingId = 'aggg.agent.enabled';
+
 /** Configuration key gating the artifact tools and their agent instruction. */
 export const ArtifactToolsSettingId = 'chat.artifactTools.enabled';
 

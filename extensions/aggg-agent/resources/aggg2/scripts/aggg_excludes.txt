@@ -1,0 +1,93 @@
+# Принадлежит каналу https://t.me/aidvizhenie · админ h-i-l-artem · гиг t,me/aidvizh_hub
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.
+#
+# ЕДИНЫЙ список исключений раздачи AGGG2.0 (SSOT, паттерн
+# config-drift-prevention: два списка разъезжаются — один не разъезжается).
+# Читают ДВОЕ:
+#   - make_archive.sh       — что НЕ попадает в архив (не сурсы);
+#   - aggg_upgrade.py       — что НИКОГДА не считается мусором при
+#                             обновлении (не в архиве = не трогаем).
+# Правки — ТОЛЬКО здесь, дубли запрещены. Файл едет в архиве (scripts/),
+# поэтому у получателей логика защиты та же, что у сборщика.
+#
+# Формат: name:<glob по имени файла/папки> | path:<glob по относительному пути>
+#   name:*.bak      — любой .bak на любом уровне
+#   path:*/db/*     — всё внутри любого каталога db/
+#   path:./CHANGELOG/* — всё внутри CHANGELOG/ в корне
+
+# окружение и кэши (пересоздаются)
+name:venv
+path:*/venv/*
+name:.venv
+path:*/.venv/*
+path:*/__pycache__/*
+name:__pycache__
+name:*.pyc
+path:*/.pytest_cache/*
+name:.pytest_cache
+path:*/.ruff_cache/*
+name:.ruff_cache
+path:*/.code-review-graph/*
+name:.code-review-graph
+path:*/.hypothesis/*
+name:.hypothesis
+
+# секреты и личные данные
+name:.env
+path:*/db/*
+name:db
+name:*.db
+path:*/models/*
+name:models
+
+# служебное воркспейса
+path:*/.git/*
+name:.git
+path:.git/*
+path:*/.github/*
+name:.github
+path:*/.githooks/*
+name:.githooks
+path:*/.gitlab/*
+name:.gitlab
+name:.gitignore
+path:*/.reasonix/*
+name:.reasonix
+
+# внутреннее (не раздаётся): агент, fable-домены, скрипты сборки
+path:./fable-method/*
+name:fable-method
+path:./skills/fable-method/eval/results/*
+path:./skills/fable-method/references/domains/devops.md
+path:./agent/reverser/*
+name:reverser
+name:make_archive.sh
+path:./scripts/add_watermarks.py
+
+# проекты (не ядро AGGG2.0, личное владельца)
+path:./projects/vpn-gui/*
+path:./projects/video-zoom/*
+
+# карантин скачанных скиллов (непроверенный код с правами агента)
+path:./quarantine-skills/*
+
+# CHANGELOG — журналы решений владельца: не сурсы, участникам не виден
+# (все уровни: корень + projects/*/CHANGELOG.md — там реальные следы
+# инфраструктуры/решений, аудит 17.08; CHANGELOG/ — директория по дням)
+name:CHANGELOG.md
+path:./CHANGELOG/*
+path:./docs/canon/CHANGELOG/*
+path:./docs/CHANGELOG-ARCHIVE/*
+name:CHANGELOG-ARCHIVE.md
+# конфиг Gemini-расширения: реальные пути машины владельца (аудит 17.08)
+name:gemini-extension.json
+
+# конфиги машин (пересобираются установщиками)
+name:config.json*
+path:*/agent-lsp/config.json*
+
+# старые артефакты и бэкапы
+name:*.tar.gz
+name:*.tar.xz
+name:*.zip
+name:*.bak

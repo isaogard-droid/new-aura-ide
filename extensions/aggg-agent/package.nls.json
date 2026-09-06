@@ -1,0 +1,8 @@
+{
+	"displayName": "AGGG Agent",
+	"description": "Global AGGG2.0 instructions and tools for every model in Aura IDE chat.",
+	"command.toggle": "Toggle Global Agent Mode",
+  "command.install": "Install or Update Agent",
+  "command.systemSetup": "Run System Setup…",
+  "command.bugReport": "Create Agent Bug Report"
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "query": "Есть ли скилл на X? Найди скилл для задачи",
+    "should_trigger": true
+  },
+  {
+    "query": "Проверь чужие скиллы по теме sing-box split",
+    "should_trigger": true
+  },
+  {
+    "query": "Как это делают в индустрии? Поищи готовые скиллы",
+    "should_trigger": true
+  },
+  {
+    "query": "Застрял на дебаге, поищи скиллы debugging",
+    "should_trigger": true
+  },
+  {
+    "query": "Найди скилл для настройки микрофона",
+    "should_trigger": true
+  },
+  {
+    "query": "Напиши мне новый скилл по спецификации agentskills",
+    "should_trigger": false
+  },
+  {
+    "query": "Оформи пост в Wiki с тегами",
+    "should_trigger": false
+  },
+  {
+    "query": "Посчитай 2+2",
+    "should_trigger": false
+  }
+]

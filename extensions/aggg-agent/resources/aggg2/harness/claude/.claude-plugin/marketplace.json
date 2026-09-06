@@ -1,0 +1,11 @@
+{
+  "name": "aggg2-marketplace",
+  "owner": { "name": "AGGG2.0", "url": "https://t.me/aidvizhenie" },
+  "plugins": [
+    {
+      "name": "aggg2",
+      "source": "./plugin",
+      "description": "AGGG2.0: команды канона — пересказ просто, поиск находок, канон-чек"
+    }
+  ]
+}
