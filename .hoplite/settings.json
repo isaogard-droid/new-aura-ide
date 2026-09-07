@@ -1,0 +1,5 @@
+{
+	"scripts": {
+		"setup": "sudo apt-get update -qq && sudo apt-get install -y -qq libkrb5-dev build-essential libx11-dev libxkbfile-dev libsecret-1-dev libxss1 libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2 libdrm2 libgbm1 libasound2t64 && npm install --no-audit --no-fund"
+	}
+}
