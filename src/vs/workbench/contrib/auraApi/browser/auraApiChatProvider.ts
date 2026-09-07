@@ -14,6 +14,7 @@ import {
 } from '../../chat/common/languageModels.js';
 import { IChatMessage } from '../../chat/common/languageModels.js';
 import { IAuraApiKeysService, IAuraApiKey } from '../common/auraApiKeys.js';
+import { agggBoostActive, AGGG_BOOST_PROMPT } from '../../aggg/common/agggBoost.js';
 
 export const AURA_API_VENDOR = 'auraApi';
 export const AURA_API_SYSTEM_PROMPT_SETTING = 'auraApi.chat.systemPrompt';
@@ -71,6 +72,10 @@ export class AuraApiChatProvider implements ILanguageModelChatProvider {
 
 		const systemPrompt = (this.configurationService.getValue<string>(AURA_API_SYSTEM_PROMPT_SETTING) ?? '').trim();
 		const oaiMessages: IOpenAIMessage[] = [];
+		// AGGG-буст: ядро правил AGGG2.0 первым системным сообщением (глобально или на проект)
+		if (agggBoostActive(this.configurationService)) {
+			oaiMessages.push({ role: 'system', content: AGGG_BOOST_PROMPT });
+		}
 		if (systemPrompt) {
 			oaiMessages.push({ role: 'system', content: systemPrompt });
 		}

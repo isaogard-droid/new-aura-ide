@@ -489,3 +489,6 @@ import './contrib/auraMarket/browser/auraMarket.contribution.js';
 
 // Aura API (key manager: ping, authenticity, security)
 import './contrib/auraApi/browser/auraApi.contribution.js';
+
+// AGGG (model booster: injects AGGG2.0 core rules into the chat system prompt)
+import './contrib/aggg/browser/aggg.contribution.js';
