@@ -1,0 +1,11 @@
+# Негативы поверх .gitignore: вложенные репозитории спрятаны от git,
+# но СЕМАНТИЧЕСКИЙ ПОИСК должен их видеть (semble читает оба файла,
+# паттерны из этого файла идут ПОСЛЕ .gitignore и перебивают его).
+!skills/fable-method/
+!skills/fable-method/**
+!projects/sherpa-voice/
+!projects/sherpa-voice/**
+# Ядро прошивки: .txt не индексируется semble по умолчанию, негатив с
+# суффиксом обходит фильтр расширений (found=True в file_walker).
+!harness/core.txt
+!harness/opencode/prompts/build.txt

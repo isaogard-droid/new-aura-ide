@@ -1,0 +1,66 @@
+{
+	"name": "aggg-agent",
+	"displayName": "%displayName%",
+	"description": "%description%",
+  "version": "3.0.0",
+	"publisher": "aura",
+	"license": "Proprietary",
+	"engines": {
+		"vscode": "^1.137.0"
+	},
+	"categories": [
+		"AI"
+	],
+	"capabilities": {
+		"virtualWorkspaces": false,
+		"untrustedWorkspaces": {
+			"supported": false
+		}
+	},
+	"activationEvents": [
+		"onStartupFinished",
+    "onCommand:aggg.agent.toggle",
+    "onCommand:aggg.agent.install",
+    "onCommand:aggg.agent.runSystemSetup",
+    "onCommand:aggg.agent.createBugReport"
+	],
+	"main": "./out/extension",
+	"scripts": {
+		"compile": "gulp compile-extension:aggg-agent",
+		"watch": "gulp watch-extension:aggg-agent"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "aggg.agent.toggle",
+				"title": "%command.toggle%",
+				"category": "AGGG"
+			},
+      {
+        "command": "aggg.agent.install",
+        "title": "%command.install%",
+        "category": "AGGG"
+      },
+      {
+        "command": "aggg.agent.runSystemSetup",
+        "title": "%command.systemSetup%",
+        "category": "AGGG"
+      },
+			{
+				"command": "aggg.agent.createBugReport",
+				"title": "%command.bugReport%",
+				"category": "AGGG"
+			}
+		],
+    "chatInstructions": [
+			{
+				"path": "./resources/aggg.instructions.md",
+				"when": "config.aggg.agent.enabled"
+			}
+		]
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/isaogard-droid/new-aura-ide.git"
+	}
+}

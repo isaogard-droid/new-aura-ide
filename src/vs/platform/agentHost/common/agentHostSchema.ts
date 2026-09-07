@@ -503,6 +503,9 @@ export const AgentHostActiveAgentTitleGenerationConfigKey = 'activeAgentTitleGen
 /** Root config key controlling rich-link guidance for Markdown plan documents. */
 export const AgentHostMarkdownPlanRichLinksEnabledConfigKey = 'markdownPlanRichLinksEnabled';
 
+/** Root config key controlling global AGGG instructions. */
+export const AgentHostAgggAgentEnabledConfigKey = 'agggAgentEnabled';
+
 /** Root config key forwarded from the renderer for the artifact tools and their instruction. */
 export const AgentHostArtifactToolsConfigKey = 'artifactTools';
 
@@ -803,6 +806,12 @@ export const platformRootSchema = createSchema({
 		type: 'boolean',
 		title: localize('agentHost.config.markdownPlanRichLinks.title', "Markdown Plan Rich Links"),
 		description: localize('agentHost.config.markdownPlanRichLinks.description', "Whether agents receive guidance for using rich links and running task markers in Markdown plan documents."),
+		default: false,
+	}),
+	[AgentHostAgggAgentEnabledConfigKey]: schemaProperty<boolean>({
+		type: 'boolean',
+		title: localize('agentHost.config.agggAgent.title', "AGGG Agent"),
+		description: localize('agentHost.config.agggAgent.description', "Whether every Agent Host provider receives the global AGGG instruction set."),
 		default: false,
 	}),
 	[AgentHostArtifactToolsConfigKey]: schemaProperty<boolean>({

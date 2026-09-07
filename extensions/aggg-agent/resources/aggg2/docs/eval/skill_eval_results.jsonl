@@ -1,0 +1,3 @@
+{"skill": "design-extract", "should": false, "query": "добавь в список покупок молоко", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"skill": "design-extract", "should": true, "query": "интерфейс блёклый и не похож на образец — разбери дизайн сайта-референса и переделай в его стиле", "triggers": 2, "runs": 2, "rate": 1.0, "pass": true}
+{"skill": "design-extract", "should": true, "query": "скопируй дизайн этого сайта https://kinogotv.cc и сделай нашу панель в этом стиле", "triggers": 2, "runs": 2, "rate": 1.0, "pass": true}

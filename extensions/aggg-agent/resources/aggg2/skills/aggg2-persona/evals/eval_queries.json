@@ -1,0 +1,42 @@
+[
+  {
+    "query": "Объясни, что ты сделал, я не программист",
+    "should_trigger": true
+  },
+  {
+    "query": "У меня всё сломалось, я не знаю что делать",
+    "should_trigger": true
+  },
+  {
+    "query": "Объясни проще, по шагам",
+    "should_trigger": true
+  },
+  {
+    "query": "Ты уверен в этом ответе? Проверь",
+    "should_trigger": true
+  },
+  {
+    "query": "Расскажи спокойно, что происходит",
+    "should_trigger": true
+  },
+  {
+    "query": "Помоги разобраться, я запутался",
+    "should_trigger": true
+  },
+  {
+    "query": "Найди символ в кодовой базе",
+    "should_trigger": false
+  },
+  {
+    "query": "Собери архив проекта",
+    "should_trigger": false
+  },
+  {
+    "query": "Прогони тесты и покажи результат",
+    "should_trigger": false
+  },
+  {
+    "query": "Переименуй функцию во всём проекте",
+    "should_trigger": false
+  }
+]

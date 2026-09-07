@@ -1,0 +1,28 @@
+# Зависимости MCP-серверов чулана (venv проекта sherpa-voice).
+# Принадлежит сообществу AGGG [AGENT OS] · канал: t.me/aidvizhenie · админ: @hilartem · гиг: t.me/aidvizh_hub
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.
+
+# Этот файл — ОДИН из двух наборов в одном venv. Второй набор (зависимости
+# самого проекта) — projects/sherpa-voice/requirements.txt. Ставить ОБА:
+#   Linux/macOS:  venv/bin/python -m pip install -r mcp/requirements.txt \
+#                       -r projects/sherpa-voice/requirements.txt
+#   Windows:      venv\Scripts\python.exe -m pip install -r mcp\requirements.txt
+#                       -r projects\sherpa-voice\requirements.txt
+# Браузер для ресёрча (один раз): python -m camoufox fetch
+#
+# Версии запинены по реально работающему venv (проверено 08.2026) —
+# без пинов pip дрейфует к новым версиям и ломает совместимость
+# (паттерн индустрии: pin versions, research.db id=320).
+# ⚠️ semgrep требует mcp==1.23.3 (ложный конфликт: semgrep работает и с
+# 1.29.0 — проверено каждым прогоном; следить при апгрейдах, mcp/README.md).
+mcp==1.29.0
+camoufox==0.5.4
+code-review-graph==2.3.7
+# опционально: чистый текст статьи (article_only) — без неё fallback на body
+trafilatura==2.2.0
+# Принадлежит: t.me/aidvizhenie · t.me/hilartem · t.me/aidvizh_hub — ищи в Телеграме
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.
+
+
+# Принадлежит каналу https://t.me/aidvizhenie · админ h-i-l-artem · гиг t,me/aidvizh_hub
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# vpnctl — управление TUN-туннелем sing-box (весь трафик через прокси).
+#
+#   vpnctl status              статус: сервис, TUN, активная прокси, внешний IP
+#   vpnctl on / off            включить / выключить туннель
+#   vpnctl autostart on|off    автозапуск при старте системы
+#   vpnctl proxy [md1|md2|best]  сменить прокси (мгновенно, без рестарта);
+#                              без аргумента — показать текущую
+#   vpnctl ip                  внешний IP (через туннель)
+#   vpnctl logs [N]            последние N строк логов (по умолчанию 30)
+#   vpnctl help                эта справка
+set -euo pipefail
+
+SECRET_FILE=/etc/sing-box/secret
+API=http://127.0.0.1:9090
+
+secret() { sudo cat "$SECRET_FILE"; }
+
+api_get() { curl -s -H "Authorization: Bearer $(secret)" "$API$1"; }
+api_put() { curl -s -X PUT -H "Authorization: Bearer $(secret)" -d "$2" "$API$1"; }
+
+cmd_status() {
+    local active
+    active=$(systemctl is-active sing-box 2>/dev/null || echo inactive)
+    echo "сервис:        $active"
+    if [ "$active" = "active" ]; then
+        ip link show sing-tun >/dev/null 2>&1 && echo "TUN:           поднят (sing-tun)" || echo "TUN:           НЕ поднят"
+        echo "прокси:        $(api_get /proxies/auto 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("now","?"))' 2>/dev/null || echo 'API недоступен')"
+        echo "внешний IP:    $(curl -s --max-time 10 https://api.ipify.org 2>/dev/null || echo 'не получить')"
+        echo "автозапуск:    $(systemctl is-enabled sing-box 2>/dev/null || echo 'неизвестно')"
+    fi
+}
+
+cmd_proxy() {
+    if [ $# -eq 0 ]; then
+        cmd_status | grep прокси
+        return
+    fi
+    case "$1" in
+        md1|md2|best)
+            api_put /proxies/auto "{\"name\": \"$1\"}" >/dev/null
+            echo "прокси → $1"
+            ;;
+        *)
+            echo "прокси может быть: md1, md2, best (авто). Сейчас: $(api_get /proxies/auto 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("now","?"))' 2>/dev/null || echo '?')"
+            exit 1
+            ;;
+    esac
+}
+
+case "${1:-help}" in
+    status)   cmd_status ;;
+    on)       sudo systemctl start sing-box && echo "туннель включён" ;;
+    off)      sudo systemctl stop sing-box && echo "туннель выключен (трафик идёт напрямую)" ;;
+    autostart)
+        case "${2:-}" in
+            on)  sudo systemctl enable sing-box && echo "автозапуск включён" ;;
+            off) sudo systemctl disable sing-box && echo "автозапуск выключен" ;;
+            *)   echo "использование: vpnctl autostart on|off" ;;
+        esac
+        ;;
+    proxy)    shift; cmd_proxy "$@" ;;
+    ip)       curl -s --max-time 10 https://api.ipify.org; echo ;;
+    logs)     journalctl -u sing-box --no-pager -n "${2:-30}" ;;
+    help|-h|--help)
+        sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+        ;;
+    *)
+        echo "неизвестная команда: $1 (vpnctl help — справка)"
+        exit 1
+        ;;
+esac

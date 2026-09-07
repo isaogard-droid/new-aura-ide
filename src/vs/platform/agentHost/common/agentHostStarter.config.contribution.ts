@@ -11,9 +11,9 @@ import { COPILOT_OTEL_CAPTURE_CONTENT_KEY, COPILOT_OTEL_ENABLED_KEY, COPILOT_OTE
 import product from '../../product/common/product.js';
 import { Registry } from '../../registry/common/platform.js';
 import {
-	AgentHostByokModelsEnabledSettingId,
-	AgentHostGitHubMcpServerEnabledSettingId,
+	AgentHostAgggAgentEnabledSettingId,
 	AgentHostActiveAgentTitleGenerationSettingId,
+	AgentHostByokModelsEnabledSettingId,
 	AgentHostClaudeAgentEnabledSettingId,
 	AgentHostClaudeMultiRootEnabledSettingId,
 	AgentHostCodexAgentBinaryArgsSettingId,
@@ -22,6 +22,7 @@ import {
 	AgentHostCodexAgentSdkRootSettingId,
 	AgentHostCodexAgentCodexHomeSettingId,
 	AgentHostCopilotMultiRootEnabledSettingId,
+	AgentHostGitHubMcpServerEnabledSettingId,
 	AgentHostMarkdownPlanRichLinksEnabledSettingId,
 	AgentHostOTelCaptureContentSettingId,
 	AgentHostOTelDbSpanExporterEnabledSettingId,
@@ -36,14 +37,15 @@ import {
 	ArtifactToolsSettingId,
 } from './agentService.js';
 import {
-	AgentHostClaudeMultiRootEnabledConfigKey,
+	AgentHostAgggAgentEnabledConfigKey,
 	AgentHostActiveAgentTitleGenerationConfigKey,
 	AgentHostArtifactToolsConfigKey,
 	AgentHostByokModelsEnabledConfigKey,
-	AgentHostGitHubMcpServerEnabledConfigKey,
+	AgentHostClaudeMultiRootEnabledConfigKey,
 	AgentHostCodexEnabledConfigKey,
 	AgentHostCodexMultiRootEnabledConfigKey,
 	AgentHostCopilotMultiRootEnabledConfigKey,
+	AgentHostGitHubMcpServerEnabledConfigKey,
 	AgentHostMarkdownPlanRichLinksEnabledConfigKey,
 	AgentHostSystemProxyEnabledConfigKey,
 } from './agentHostSchema.js';
@@ -206,6 +208,13 @@ configurationRegistry.registerConfiguration({
 			tags: ['experimental', 'advanced'],
 			experiment: { mode: 'auto' },
 			agentHost: { key: AgentHostMarkdownPlanRichLinksEnabledConfigKey },
+		},
+		[AgentHostAgggAgentEnabledSettingId]: {
+			type: 'boolean',
+			markdownDescription: nls.localize('aggg.agent.enabled', "When enabled, AGGG instructions are applied globally to every chat model and Agent Host provider."),
+			default: false,
+			scope: ConfigurationScope.APPLICATION,
+			agentHost: { key: AgentHostAgggAgentEnabledConfigKey },
 		},
 		[AgentHostSystemProxyEnabledSettingId]: {
 			type: 'boolean',

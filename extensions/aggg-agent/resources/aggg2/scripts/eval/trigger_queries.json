@@ -1,0 +1,260 @@
+[
+  {
+    "skill": "nodumb",
+    "should": true,
+    "query": "посоветуй, как лучше сделать рефакторинг этого модуля",
+    "heldout": true
+  },
+  {
+    "skill": "nodumb",
+    "should": false,
+    "query": "напиши функцию сложения двух чисел"
+  },
+  {
+    "skill": "ask-nodumb",
+    "should": true,
+    "query": "придумай экран для новой фичи",
+    "heldout": true
+  },
+  {
+    "skill": "ask-nodumb",
+    "should": false,
+    "query": "поменяй цвет кнопки на синий"
+  },
+  {
+    "skill": "changelog-discipline",
+    "should": true,
+    "query": "запиши в CHANGELOG, что мы изменили и почему",
+    "heldout": true
+  },
+  {
+    "skill": "changelog-discipline",
+    "should": false,
+    "query": "напиши commit message для этой правки"
+  },
+  {
+    "skill": "system-feedback",
+    "should": true,
+    "query": "что увидит юзер после сохранения настройки?",
+    "heldout": true
+  },
+  {
+    "skill": "system-feedback",
+    "should": false,
+    "query": "сделай кнопку красивее"
+  },
+  {
+    "skill": "fable-judge",
+    "should": true,
+    "query": "проверь, что эта работа реально сделана, а не заявлена",
+    "heldout": true
+  },
+  {
+    "skill": "fable-judge",
+    "should": false,
+    "query": "перепиши функцию на asyncio"
+  },
+  {
+    "skill": "fable-loop",
+    "should": true,
+    "query": "выполни большую многошаговую задачу с оркестрацией субагентов",
+    "heldout": true
+  },
+  {
+    "skill": "fable-loop",
+    "should": false,
+    "query": "поправь опечатку в README"
+  },
+  {
+    "skill": "skill-authoring",
+    "should": true,
+    "query": "создай новый скилл по правилам",
+    "heldout": true
+  },
+  {
+    "skill": "skill-authoring",
+    "should": false,
+    "query": "прочитай файл и перескажи"
+  },
+  {
+    "skill": "jsonc-surgical-edit",
+    "should": true,
+    "query": "добавь mcp-сервер в opencode.json не сломав комментарии",
+    "heldout": true
+  },
+  {
+    "skill": "jsonc-surgical-edit",
+    "should": false,
+    "query": "отформатируй этот текст"
+  },
+  {
+    "skill": "db-first-search",
+    "should": true,
+    "query": "где определён load_mix в sherpa-voice?",
+    "tools": [
+      "db-tools_symbol",
+      "db-tools_search",
+      "db-tools_calls",
+      "db-tools_imports",
+      "db-tools_deps",
+      "db-tools_list_dbs",
+      "db-tools_db_stats",
+      "db-tools_index_project"
+    ],
+    "heldout": true
+  },
+  {
+    "skill": "db-first-search",
+    "should": false,
+    "query": "привет"
+  },
+  {
+    "skill": "web-research-camoufox",
+    "should": true,
+    "query": "как в индустрии принято делать rate limiting в Telegram-ботах — найди веб-ресёрчем, как это делают в проде",
+    "heldout": true
+  },
+  {
+    "skill": "web-research-camoufox",
+    "should": false,
+    "query": "сколько будет 2+2"
+  },
+  {
+    "skill": "task-cycle",
+    "should": true,
+    "query": "выполни по рабочему циклу задачу: добавь в проект функцию ping — со всеми фазами от переосмысления до отчёта",
+    "heldout": true
+  },
+  {
+    "skill": "task-cycle",
+    "should": false,
+    "query": "дай определение термина"
+  },
+  {
+    "skill": "aggg2-mandatory-reads",
+    "should": true,
+    "query": "начинаю задачу в воркспейсе AGGG2.0 — что прочитать перед началом работы?"
+  },
+  {
+    "skill": "aggg2-mandatory-reads",
+    "should": true,
+    "query": "вопрос по содержимому AGGG2.0: где какие скиллы и правила лежат?",
+    "heldout": true
+  },
+  {
+    "skill": "aggg2-mandatory-reads",
+    "should": false,
+    "query": "сколько будет 7 умножить на 8"
+  },
+  {
+    "skill": "aggg2-mandatory-reads",
+    "should": false,
+    "query": "напиши хайку про осень",
+    "heldout": true
+  },
+  {
+    "skill": "loop",
+    "should": true,
+    "query": "/loop 10 30m проведи аудит проекта и закрывай найденное одно за другим"
+  },
+  {
+    "skill": "loop",
+    "should": true,
+    "query": "работай цикл за циклом, находи новые решения и продолжай сам, пока не будет готово",
+    "heldout": true
+  },
+  {
+    "skill": "loop",
+    "should": false,
+    "query": "напиши функцию сложения двух чисел"
+  },
+  {
+    "skill": "mic-noise-suppression",
+    "should": true,
+    "query": "убери шум с микрофона, голос стал неразборчивый",
+    "heldout": true
+  },
+  {
+    "skill": "mic-noise-suppression",
+    "should": false,
+    "query": "поменяй тему в терминале"
+  },
+  {
+    "skill": "design-extract",
+    "should": true,
+    "query": "скопируй дизайн этого сайта https://kinogotv.cc и сделай нашу панель в этом стиле, чтобы выглядело как там"
+  },
+  {
+    "skill": "design-extract",
+    "should": true,
+    "query": "наш интерфейс блёклый и не похож на образец — разбери дизайн сайта-референса и переделай",
+    "heldout": true
+  },
+  {
+    "skill": "design-extract",
+    "should": false,
+    "query": "добавь в список покупок молоко"
+  },
+  {
+    "skill": "deep-gap-research",
+    "should": true,
+    "heldout": true,
+    "query": "чекни каумфи ресерч и спроси распроси о нашей системе: всех фактах ресерчь, чтобы найти что-то интересное, что мы упускаем, о каждой детали, 20-40 источников"
+  },
+  {
+    "skill": "deep-gap-research",
+    "should": true,
+    "query": "ресёрч №2 — новые углы, не повторяю первый круг: что мы упускаем, много источников"
+  },
+  {
+    "skill": "deep-gap-research",
+    "should": false,
+    "query": "какая команда показывает свободное место на диске"
+  },
+  {
+    "skill": "deep-gap-research",
+    "should": false,
+    "query": "поменяй цвет кнопки на зелёный"
+  },
+  {
+    "skill": "text-proofread",
+    "should": true,
+    "heldout": true,
+    "query": "убери ошибки в этом тексте, не теряя смысл: ..."
+  },
+  {
+    "skill": "text-proofread",
+    "should": true,
+    "query": "вычитай пост: грамматика, пунктуация, и в целом"
+  },
+  {
+    "skill": "text-proofread",
+    "should": false,
+    "query": "переведи этот абзац на английский"
+  },
+  {
+    "skill": "text-proofread",
+    "should": false,
+    "query": "напиши продающий текст для лендинга с нуля"
+  },
+  {
+    "skill": "gui-battle-test",
+    "should": true,
+    "query": "батл тест всех кнопок и состояний интерфейса"
+  },
+  {
+    "skill": "gui-battle-test",
+    "should": true,
+    "query": "как выдать права агенту без пароля для автономных тестов"
+  },
+  {
+    "skill": "gui-battle-test",
+    "should": false,
+    "query": "покрой логику юнит-тестами"
+  },
+  {
+    "skill": "gui-battle-test",
+    "should": false,
+    "query": "переведи страницу на английский"
+  }
+]

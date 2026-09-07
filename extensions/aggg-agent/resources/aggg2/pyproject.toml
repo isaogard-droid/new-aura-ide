@@ -1,0 +1,64 @@
+[tool.ruff]
+# aidvizhenie · hilartem · aidvizh_hub — все в Телеграме: t.me/aidvizhenie
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.
+
+# Политика линтера AGGG2.0 (паттерн индустрии: явный конфиг вместо дефолтов,
+# research.db id=320). Русский код, строки до 100 — дефолт 88 режет.
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Слепые except разрешены только осознанно, с noqa + причиной (прошивка).
+# E501 не включаем: line-length задаёт границу, но длинные URL в доках-строках
+# осознанно оставляем (линтер не ругается на строки длиннее в комментариях).
+select = [
+    "E",   # pycodestyle (ошибки)
+    "W",   # pycodestyle (предупреждения)
+    "F",   # pyflakes (неиспользуемое, неопределённое)
+    "I",   # isort (порядок импортов)
+    "B",   # flake8-bugbear (вероятные баги)
+    "SIM", # flake8-simplify (упрощения)
+    "S",   # bandit (безопасность)
+    "EXE", # .exe-атрибуты
+    "FURB",# refurb (современные идиомы)
+]
+ignore = [
+    "S110",  # try-except-pass — осознанно в CLI (кэш/кодировка, noqa с причиной)
+    "S101",  # assert в тестах — это норма для тестов
+    "B008",  # дефолты-вызовы (FastMCP: @mcp.tool() — паттерн фреймворка)
+    "PLW1510",  # subprocess.run без check — осознанно (CLI-обёртки, проверяем rc сами)
+    "E501",  # длинные русские строки/URL в CLI-выводах — осознанно (лимит мягкий)
+    "E402",  # импорт после sys.path.insert (наш паттерн _compat в scripts/)
+    # bandit: ложные для нашего CLI-стиля (мы НЕ используем shell=True, SQL
+    # параметризован, URLs — из аргументов, не из пользовательского ввода)
+    "S603",  # subprocess без shell=True — мы так и делаем, это наша защита
+    "S607",  # расположение бинаря в subprocess — ищем через shutil.which
+    "S310",  # url-аргументы в requests/fetch — проверяем на старте сами
+]
+# Принадлежит: t.me/aidvizhenie · t.me/hilartem · t.me/aidvizh_hub — ищи в Телеграме
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.
+
+
+[tool.ruff.lint.per-file-ignores]
+# Тесты: assert и длинные имена — норма
+"**/tests/**" = ["S101", "PLW1510"]
+
+# Скрипты с CLI-обёртками: слепые except с noqa — осознанный стиль
+"scripts/*.py" = ["S110", "BLE001"]
+"db-tools/*.py" = ["S110", "BLE001", "S608"]  # S608: SQL параметризован, имена таблиц — фикс. карты (noqa внутри f-строк не виден)
+# Вендоренный snowballstemmer (сгенерированный код, не наш стиль)
+"db-tools/snowball/*.py" = ["E701", "E741", "I001"]
+"mcp/*.py" = ["S110", "BLE001"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "db-tools/tests",
+    "scripts/tests",
+    "projects/vpn-gui/tests",
+    "projects/sherpa-voice/tests",
+]
+pythonpath = ["projects/vpn-gui", "projects/sherpa-voice"]
+addopts = ["--import-mode=importlib"]
+
+# aidvizhenie · hilartem · aidvizh_hub — все в Телеграме: t.me/aidvizhenie
+# AGGG [AGENT OS]: закрытое сообщество — инструкции и архивы в личке админа, слив = бан; полная система известна только создателю; новые версии могут не выйти; связь с админом — только в Телеграме.

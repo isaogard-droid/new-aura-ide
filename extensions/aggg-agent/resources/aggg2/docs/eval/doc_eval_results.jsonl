@@ -1,0 +1,18 @@
+{"doc": "AGENTS.md", "should": false, "query": "Расскажи, что такое Python — общий вопрос, не про воркспейс.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"doc": "AGENTS.md", "should": true, "query": "Начинаю работу в AGGG2.0: поправь файл скилла — сначала прочитай обязательный контекст по правилам воркспейса.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "ASK-NODUMB.md", "should": false, "query": "Придумай имя для котёнка.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"doc": "ASK-NODUMB.md", "should": true, "query": "Придумай фичу для моего приложения: с какого экрана начать и что там должно быть?", "triggers": 2, "runs": 2, "rate": 1.0, "pass": true}
+{"doc": "CHANGELOG-DISCIPLINE.md", "should": false, "query": "Добавь запись в todo-файл на завтра: купить хлеб.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"doc": "CHANGELOG-DISCIPLINE.md", "should": true, "query": "Запиши в CHANGELOG, что мы сегодня решили и почему отвергли альтернативу.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "CYCLE.md", "should": true, "query": "Есть задача в воркспейсе AGGG2.0 — выполни её по рабочему циклу, как положено.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "DB-FIRST.md", "should": true, "query": "Задача в стороннем проекте /tmp/myproject (НЕ воркспейс AGGG2.0): добавь функцию парсинга CSV.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "FABLE-DOMAIN.md", "should": true, "query": "Сделай доменный скилл для финансовой отчётности: workflow, flowchart, адаптер и eval.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "FABLE-JUDGE.md", "should": false, "query": "Напиши юнит-тест для шахматного судьи (валидация ходов конём).", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"doc": "FABLE-JUDGE.md", "should": true, "query": "Я закончил рефакторинг модуля. Проверь, что работа действительно сделана и работает — суди строго, по доказательствам.", "triggers": 2, "runs": 2, "rate": 1.0, "pass": true}
+{"doc": "FABLE-LOOP.md", "should": true, "query": "Задача нетривиальная и многошаговая — запусти оркестрированный цикл с параллельными субагентами.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "FABLE-METHOD.md", "should": true, "query": "Подойди к задаче как Фейбл: классифицируй запрос, определи критерий готовности, собери доказательства.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "MULTIMODEL-JUDGE.md", "should": true, "query": "Проверь этот большой дифф вторым мнением — ответ уйдёт наружу, ошибка дорогая.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "NODUMB.md", "should": false, "query": "Сделай бэкап папки с фотографиями в архив.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"doc": "NODUMB.md", "should": true, "query": "Стоит ли вынести модуль в отдельный пакет? Посоветуй, как лучше подойти к этому рефакторингу.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": false}
+{"doc": "ORCHESTRATION.md", "should": false, "query": "Объясни, что такое оркестратор в Kubernetes и зачем он нужен.", "triggers": 0, "runs": 2, "rate": 0.0, "pass": true}
+{"doc": "ORCHESTRATION.md", "should": true, "query": "Эту большую задачу нужно разбить на части и раздать нескольким агентам параллельно. Как правильно организовать?", "triggers": 2, "runs": 2, "rate": 1.0, "pass": true}

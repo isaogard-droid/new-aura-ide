@@ -1,0 +1,15 @@
+{
+  "skill_name": "workspace-setup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Новая Windows-машина, только что установлен Windows, нет даже python. Поставь AGGG2.0.",
+      "expected_output": "bootstrap.ps1 (winget: mise → runtime'ы → setup.py) или mise через winget install jdx.mise; затем python scripts/setup.py (Windows: python, не python3); PYTHONUTF8=1 в User env (консоль cp1251); после установки — doctor.py, opencode mcp list, поиск по базе. Всё идемпотентно."
+    },
+    {
+      "id": 2,
+      "prompt": "Собрать архив AGGG2.0 для передачи другому человеку, БЕЗ секретов и с паролем.",
+      "expected_output": "make_archive.sh --zip-password ПАРОЛЬ (ZipCrypto); встроенная проверка секретов перед сборкой; исключения: db/, venv/, .env, models/, .git/; после сборки — независимая проверка: распаковать, grep по секретам (sk- с 30+ символами, Bearer, ghp_), нет .env/.pem/.key; проверить, что пароль реально защищает (без пароля — incorrect password)."
+    }
+  ]
+}
